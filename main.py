@@ -2,6 +2,7 @@
 import gymnasium as gym
 import time
 import numpy as np
+import os
 
 #Intialize the env
 env = gym.make("MountainCar-v0", render_mode="ansi")
@@ -21,8 +22,23 @@ def get_discrete_state(state):
     )
     return tuple(discrete_state)
 
-# Initialize Q-table with shape (20, 20, 3) -> 20 positions x 20 velocities x 3 actions
-q_table = np.zeros(DISCRETE_BINS + [env.action_space.n])
+load_saved_data = (
+    input("Load existing Q-table from NPY? (y/n): ").strip().lower()
+)
+file_name = "mountain_car_q_table.npy"  # Changed from .csv to .npy
+
+if load_saved_data == "y" and os.path.exists(file_name):
+    # Load the 3D array directly (no reshaping needed!)
+    q_table = np.load(file_name)
+    print(">>> Successfully loaded Q-table from NPY file!")
+else:
+    if load_saved_data == "y":
+        print(f">>> NPY file '{file_name}' not found. Starting fresh.")
+    else:
+        print(">>> Starting fresh.")
+
+    # Create a brand new Q-table filled with zeros
+    q_table = np.zeros(DISCRETE_BINS + [env.action_space.n])
 
 # 3. Hyperparameters
 total_episodes = 50000
@@ -76,23 +92,28 @@ try:
 except KeyboardInterrupt:
     print("\nSkipping training till how much done")
 
-print("\n--- WATCHING TRAINED AGENT PLAY ---")
 env.close()  # Close text environment
+if input("\nDo you want to watch the trained agent play? y/n:").strip().lower() == "y":
+    # Open graphic environment
+    env = gym.make("MountainCar-v0", render_mode="human")
+    current_state, info = env.reset()
+    state_discrete = get_discrete_state(current_state)
+    done = False
 
-# Open graphic environment
-env = gym.make("MountainCar-v0", render_mode="human")
-current_state, info = env.reset()
-state_discrete = get_discrete_state(current_state)
-done = False
+    while not done:
+        # Always exploit the learned values
+        action = np.argmax(q_table[state_discrete])
+        next_state, reward, terminated, truncated, info = env.step(action)
+        done = terminated or truncated
 
-while not done:
-    # Always exploit the learned values
-    action = np.argmax(q_table[state_discrete])
-    next_state, reward, terminated, truncated, info = env.step(action)
-    done = terminated or truncated
+        state_discrete = get_discrete_state(next_state)
+        time.sleep(0.01)  # Keeps frame rates looking smooth
 
-    state_discrete = get_discrete_state(next_state)
-    time.sleep(0.01)  # Keeps frame rates looking smooth
+    env.close()
 
-env.close()
+if input("\nDo you want to save the trained data? y/n:").strip().lower() == "y":
+    # Save the 3D array directly
+    np.save("mountain_car_q_table.npy", q_table)
+    print("Q-table saved successfully!")
+
 print("Simulation complete!")
