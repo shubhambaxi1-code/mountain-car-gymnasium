@@ -41,7 +41,8 @@ else:
     q_table = np.zeros(DISCRETE_BINS + [env.action_space.n])
 
 # 3. Hyperparameters
-total_episodes = 50000
+total_episodes = 5000
+str_total = str(total_episodes)
 learning_rate = 0.1  # alpha
 discount_rate = 0.95  # gamma
 
@@ -49,7 +50,7 @@ discount_rate = 0.95  # gamma
 epsilon = 1.0
 max_epsilon = 1.0
 min_epsilon = 0.01
-decay_rate = 0.002
+decay_rate = 0.001
 
 try:
     for episode in range(total_episodes):
@@ -59,8 +60,6 @@ try:
         state_discrete = get_discrete_state(state)
 
         done = False #Is episode over?
-
-        print(f"Starting episode {episode}")
 
         while not done:
             if np.random.uniform(0, 1) > epsilon: # Pick a random value to decide whether to explore or not
@@ -88,7 +87,9 @@ try:
             -decay_rate * episode
         )
 
-        print(f"Episode finished! Total reward: {total_reward}")
+        #TODO: make the below           here  flexible
+        print(f"\rEpisode: {episode + 1:08} | {round((episode/total_episodes)*100, 2):.3f}% done | Score: {total_reward:03} | Epsilon: {epsilon:.3f}", end="")
+        
 except KeyboardInterrupt:
     print("\nSkipping training till how much done")
 
