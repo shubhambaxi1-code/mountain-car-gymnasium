@@ -9,13 +9,13 @@ env = gym.make("MountainCar-v0", render_mode="ansi")
 
 DISCRETE_BINS = [50,50] #Define the number of bins as per preferences
 
-discrete_win_size = (
+discrete_bin_size = (
     env.observation_space.high - env.observation_space.low
 ) / DISCRETE_BINS # Calculate width of each bin
 
 def get_discrete_state(state):
     """Converts continuous states like [-0.5234, 0.012] into discrete index tuples like (7, 11)"""
-    discrete_state = (state - env.observation_space.low) / discrete_win_size
+    discrete_state = (state - env.observation_space.low) / discrete_bin_size
     #Clip the index values between 0 and 50-1 in this situation so it never crashes at boundaries
     discrete_state = np.clip(
         discrete_state.astype(int), 0, np.array(DISCRETE_BINS) - 1
@@ -41,7 +41,7 @@ else:
     q_table = np.zeros(DISCRETE_BINS + [env.action_space.n])
 
 # 3. Hyperparameters
-total_episodes = 5000
+total_episodes = 10000000
 str_total = str(total_episodes)
 learning_rate = 0.1  # alpha
 discount_rate = 0.95  # gamma
